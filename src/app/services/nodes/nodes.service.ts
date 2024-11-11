@@ -30,6 +30,11 @@ export class NodesService {
     return this.nodesSubject.getValue();
   }
 
+  updateNodes(nodes: Node[]) {
+    this.nodesSubject.next(nodes);
+    this.localStorageService.addData('nodes', nodes);
+  }
+
   // Links
   addLink(link: Link) {
     const links = [...this.linksSubject.getValue(), link];
@@ -39,6 +44,19 @@ export class NodesService {
 
   getLinks(): Link[] {
     return this.linksSubject.getValue();
+  }
+
+  updateLinks(links: Link[]): void {
+    this.linksSubject.next(links);
+    this.localStorageService.addData('links', links);
+  }
+
+  addLinkIfClose(node1: Node, node2: Node, distance: number) {
+    const dx = (node1.x ?? 0) - (node2.x ?? 0);
+    const dy = (node1.y ?? 0) - (node2.y ?? 0);
+    if (Math.sqrt(dx * dx + dy * dy) < distance) {
+      this.addLink({ source: node1.id, target: node2.id });
+    }
   }
 
   // Clear

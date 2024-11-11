@@ -107,6 +107,14 @@ export class GrafoComponent {
       .append('circle')
       .attr('r', 10)
       .attr('fill', '#69b3a2')
+      .on('contextmenu', (event, d) => {
+        event.preventDefault();
+        this.showContextMenu(event, d);
+      })
+      .on('dblclick', (event, d) => {
+        console.log('Doble clic en nodo:', d); // Registro de depuración
+        this.showEditLabelInput(event, d);
+      })
       .call(
         d3
           .drag<
@@ -163,6 +171,11 @@ export class GrafoComponent {
               if (!event.active) simulation.alphaTarget(0);
               d.fx = null;
               d.fy = null;
+              this.nodes.forEach((node) => {
+                if (node.id !== d.id) {
+                  this.nodeService.addLinkIfClose(d, node, 50);
+                }
+              });
             }
           )
       );
@@ -176,7 +189,13 @@ export class GrafoComponent {
       .append('text')
       .attr('dy', -3)
       .attr('dx', 12)
-      .text((d) => d.name);
+      .text((d) => d.name)
+      .attr('fill', () => {
+        const isDarkTheme = window.matchMedia(
+          '(prefers-color-scheme: dark)'
+        ).matches;
+        return isDarkTheme ? '#ffffff' : '#000000';
+      });
 
     simulation.on('tick', () => {
       link
@@ -189,5 +208,95 @@ export class GrafoComponent {
 
       label.attr('x', (d) => d.x ?? 0).attr('y', (d) => d.y ?? 0);
     });
+  }
+
+  private showContextMenu(event: MouseEvent, node: Node): void {
+    const contextMenu = d3
+      .select(this.el.nativeElement)
+      .append('div')
+      .attr('class', 'context-menu')
+      .style('position', 'absolute')
+      .style('left', `${event.pageX}px`)
+      .style('top', `${event.pageY}px`)
+      .style('background', '#fff')
+      .style('border', '1px solid #ccc')
+      .style('padding', '10px')
+      .style('z-index', '1000');
+
+    contextMenu
+      .append('div')
+      .text('Eliminar nodo')
+      .on('click', () => {
+        this.removeNode(node);
+        contextMenu.remove();
+      });
+
+    d3.select('body').on('click.context-menu', () => {
+      contextMenu.remove();
+      d3.select('body').on('click.context-menu', null);
+    });
+  }
+
+  private showEditLabelInput(event: MouseEvent, node: Node): void {
+    const container = d3
+      .select(this.el.nativeElement)
+      .append('div')
+      .style('position', 'absolute')
+      .style('left', `${event.pageX}px`)
+      .style('top', `${event.pageY}px`)
+      .style('z-index', '1000')
+      .style('background', '#fff')
+      .style('border', '1px solid #ccc')
+      .style('padding', '10px')
+      .style('border-radius', '4px');
+
+    container
+      .append('label')
+      .text('Edita el nodo')
+      .style('display', 'block')
+      .style('margin-bottom', '5px');
+
+    const input = container
+      .append('input')
+      .attr('type', 'text')
+      .attr('value', node.name)
+      .style('width', '200px')
+      .style('padding', '5px')
+      .style('margin-bottom', '5px')
+      .on('blur', () => {
+        this.updateNodeName(node, input.property('value'));
+        container.remove();
+      })
+      .on('keydown', (e) => {
+        if (e.key === 'Enter') {
+          this.updateNodeName(node, input.property('value'));
+          container.remove();
+        }
+      });
+
+    const inputNode = input.node();
+    if (inputNode) {
+      inputNode.focus();
+    }
+  }
+
+  private updateNodeName(node: Node, newName: string): void {
+    const nodes = this.nodeService
+      .getNodes()
+      .map((n) => (n.id === node.id ? { ...n, name: newName } : n));
+    this.nodeService.updateNodes(nodes);
+    this.updateLinks();
+    this.updateGraph();
+  }
+
+  private removeNode(node: Node): void {
+    const nodes = this.nodeService.getNodes().filter((n) => n.id !== node.id);
+    const links = this.nodeService
+      .getLinks()
+      .filter((link) => link.source !== node.id && link.target !== node.id);
+    this.nodeService.updateNodes(nodes);
+    this.nodeService.updateLinks(links);
+    this.updateLinks();
+    this.updateGraph();
   }
 }

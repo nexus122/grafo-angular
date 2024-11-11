@@ -1,25 +1,3 @@
 <div class="navbar bg-base-100 w-full flex">
-  <div class="drawer">
-    <input id="my-drawer" type="checkbox" class="drawer-toggle" />
-    <div class="drawer-content">
-      <!-- Page content here -->
-      <label for="my-drawer" class="btn btn-primary drawer-button"
-        >Abrir menu</label
-      >
-    </div>
-
-    <div class="drawer-side">
-      <label
-        for="my-drawer"
-        aria-label="close sidebar"
-        class="drawer-overlay"
-      ></label>
-      <ul class="menu bg-base-200 text-base-content min-h-full w-80 p-4">
-        <div class="flex flex-col gap-2">
-          <app-nodes-form></app-nodes-form>
-          <app-links-form></app-links-form>
-        </div>
-      </ul>
-    </div>
-  </div>
+  <app-nodes-form></app-nodes-form>
 </div>
