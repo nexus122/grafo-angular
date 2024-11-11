@@ -1,0 +1,7 @@
+.drawer-side {
+  right: 0; /* Asegurarse de que el sidepanel esté alineado a la derecha */
+}
+
+.drawer-toggle:checked ~ .drawer-content {
+  margin-right: 0; /* Eliminar margen a la derecha cuando el drawer está abierto */
+}

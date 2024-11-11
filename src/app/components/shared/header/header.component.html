@@ -1,0 +1,29 @@
+<div class="flex navbar bg-base-100 w-full">
+  <div class="drawer justify-items-end">
+    <input id="my-drawer" type="checkbox" class="drawer-toggle" />
+    <div class="drawer-content">
+      <!-- Page content here -->
+      <label for="my-drawer" class="btn btn-primary drawer-button"
+        >Abrir menu</label
+      >
+    </div>
+    <div>
+      <button class="btn btn-circle btn-danger" (click)="clearData()">
+        <i class="fa-solid fa-trash"></i>
+      </button>
+    </div>
+    <div class="drawer-side">
+      <label
+        for="my-drawer"
+        aria-label="close sidebar"
+        class="drawer-overlay"
+      ></label>
+      <ul class="menu bg-base-200 text-base-content min-h-full w-80 p-4">
+        <div class="flex flex-col gap-2">
+          <app-nodes-form></app-nodes-form>
+          <app-links-form></app-links-form>
+        </div>
+      </ul>
+    </div>
+  </div>
+</div>

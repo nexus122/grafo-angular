@@ -1,0 +1,16 @@
+<p class="text-xl mb-2">Agregar un nodo</p>
+<form [formGroup]="nodeForm" (ngSubmit)="onSubmit()">
+  <div class="flex flex-row items-end gap-2">
+    <input
+      type="text"
+      id="nodeName"
+      class="input input-bordered w-full max-w-xs"
+      formControlName="nodeName"
+      placeholder="Nombre del nodo"
+      required
+    />
+    <button type="submit" class="btn btn-circle btn-primary">
+      <i class="fa-solid fa-plus"></i>
+    </button>
+  </div>
+</form>
