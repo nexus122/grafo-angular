@@ -27,6 +27,9 @@ export class NodesFormComponent {
         name: this.nodeForm.value.nodeName,
       };
       this.nodesService.addNode(node);
+      this.nodeForm.reset();
+      this.nodeForm.controls['nodeName'].setErrors(null);
+      document.getElementById('nodeName')?.focus();
     }
   }
 }

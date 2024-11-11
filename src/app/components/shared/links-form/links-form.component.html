@@ -1,27 +1,25 @@
-<p class="text-xl mb-2">Agregar un enlace</p>
+<p class="text-xl mb-2">Crear un enlace</p>
 <form [formGroup]="linksForm" (ngSubmit)="onSubmit()">
-  <div class="flex flex-row items-end gap-2">
+  <div class="flex flex-col items-end gap-2">
     <select
-      id="source"
-      class="input input-bordered w-full max-w-xs"
+      class="select select-bordered w-full max-w-xs"
       formControlName="source"
-      required
     >
+      <option value="" disabled selected>Selecciona un nodo</option>
       <option *ngFor="let node of nodes" [value]="node.id">
         {{ node.name }}
       </option>
     </select>
     <select
-      id="target"
-      class="input input-bordered w-full max-w-xs"
+      class="select select-bordered w-full max-w-xs"
       formControlName="target"
-      required
     >
+      <option value="" disabled selected>Selecciona un nodo</option>
       <option *ngFor="let node of nodes" [value]="node.id">
         {{ node.name }}
       </option>
     </select>
-    <button type="submit" class="btn btn-circle btn-primary">
+    <button type="submit" class="btn btn-block btn-primary">
       <i class="fa-solid fa-plus"></i>
     </button>
   </div>
