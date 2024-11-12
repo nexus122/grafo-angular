@@ -89,6 +89,9 @@ export class EditLabelComponent implements AfterViewInit {
   }
 
   onDragStart(event: MouseEvent) {
+    if ((event.target as HTMLElement).tagName.toLowerCase() === 'textarea') {
+      return;
+    }
     this.isDragging = true;
     this.dragStartX = event.clientX - this.el.nativeElement.offsetLeft;
     this.dragStartY = event.clientY - this.el.nativeElement.offsetTop;
