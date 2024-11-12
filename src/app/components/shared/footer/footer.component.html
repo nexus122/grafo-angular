@@ -1,1 +1,22 @@
-<p>footer works!</p>
+<div class="navbar flex justify-center bg-neutral">
+  <div class="flex justify-center w-full">
+    <app-nodes-form></app-nodes-form>
+  </div>
+  <div class="absolute right-0 flex gap-2 mr-2">
+    <button class="btn" (click)="clearData()">
+      <i class="fa-solid fa-trash"></i> Clear
+    </button>
+    <button class="btn" (click)="exportData()">
+      <i class="fa-solid fa-file-export"></i> Export
+    </button>
+    <button class="btn" (click)="fileInput.click()">
+      <i class="fa-solid fa-file-import"></i> Import
+    </button>
+    <input
+      type="file"
+      #fileInput
+      (change)="importData($event)"
+      style="display: none"
+    />
+  </div>
+</div>

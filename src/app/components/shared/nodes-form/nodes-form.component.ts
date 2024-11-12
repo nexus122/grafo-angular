@@ -21,10 +21,10 @@ export class NodesFormComponent {
   }
 
   onSubmit() {
-    if (this.nodeForm.valid) {
+    if (this.nodeForm.valid && this.nodeForm.value.nodeName.trim() !== '') {
       const node: Node = {
         id: Date.now().toString(),
-        name: this.nodeForm.value.nodeName,
+        name: this.nodeForm.value.nodeName.trim(),
       };
       this.nodesService.addNode(node);
       this.nodeForm.reset();
