@@ -1,7 +1,17 @@
-import { Component, ElementRef, inject } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  inject,
+  ViewChild,
+  ComponentFactoryResolver,
+  ViewContainerRef,
+  HostListener,
+} from '@angular/core';
 import { NodesService } from '../../services/nodes/nodes.service';
-import { Node, Link } from '../../models/grafo.models';
+import { Node } from '../../models/grafo.models';
 import * as d3 from 'd3';
+import { ContextMenuComponent } from '../context-menu/context-menu.component';
+import { EditLabelComponent } from '../edit-label/edit-label.component';
 
 @Component({
   selector: 'app-grafo',
@@ -12,6 +22,10 @@ import * as d3 from 'd3';
 })
 export class GrafoComponent {
   nodeService = inject(NodesService);
+  @ViewChild('contextMenuContainer', { read: ViewContainerRef })
+  contextMenuContainer!: ViewContainerRef;
+  @ViewChild('editLabelContainer', { read: ViewContainerRef })
+  editLabelContainer!: ViewContainerRef;
 
   private nodes: (Node & {
     x?: number;
@@ -21,13 +35,17 @@ export class GrafoComponent {
   })[] = [];
   private links: { source: Node; target: Node }[] = [];
 
-  constructor(private el: ElementRef) {}
+  constructor(
+    private el: ElementRef,
+    private componentFactoryResolver: ComponentFactoryResolver
+  ) {}
 
   ngOnInit(): void {
     this.nodeService.nodesChanged$.subscribe((nodes) => {
       this.nodes = nodes.map((node) => ({
         id: node.id,
         name: node.name,
+        description: node.description, // Asegurarse de incluir la descripción
       }));
       this.updateLinks();
       this.updateGraph();
@@ -39,6 +57,12 @@ export class GrafoComponent {
       }));
       this.updateGraph();
     });
+  }
+
+  @HostListener('window:scroll', ['$event'])
+  onScroll() {
+    this.contextMenuContainer.clear();
+    this.editLabelContainer.clear();
   }
 
   private updateLinks(): void {
@@ -107,6 +131,7 @@ export class GrafoComponent {
       .append('circle')
       .attr('r', 10)
       .attr('fill', '#69b3a2')
+      .style('cursor', 'pointer') // Agregar estilo de cursor
       .on('contextmenu', (event, d) => {
         event.preventDefault();
         this.showContextMenu(event, d);
@@ -117,67 +142,26 @@ export class GrafoComponent {
       })
       .call(
         d3
-          .drag<
-            any,
-            Node & {
-              x?: number;
-              y?: number;
-              fx?: number | null;
-              fy?: number | null;
-            }
-          >()
-          .on(
-            'start',
-            (
-              event,
-              d: Node & {
-                x?: number;
-                y?: number;
-                fx?: number | null;
-                fy?: number | null;
+          .drag<SVGCircleElement, Node>()
+          .on('start', (event, d) => {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+          })
+          .on('drag', (event, d) => {
+            d.fx = event.x;
+            d.fy = event.y;
+          })
+          .on('end', (event, d) => {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+            this.nodes.forEach((node) => {
+              if (node.id !== d.id) {
+                this.nodeService.addLinkIfClose(d, node, 50);
               }
-            ) => {
-              if (!event.active) simulation.alphaTarget(0.3).restart();
-              d.fx = d.x;
-              d.fy = d.y;
-            }
-          )
-          .on(
-            'drag',
-            (
-              event,
-              d: Node & {
-                x?: number;
-                y?: number;
-                fx?: number | null;
-                fy?: number | null;
-              }
-            ) => {
-              d.fx = event.x;
-              d.fy = event.y;
-            }
-          )
-          .on(
-            'end',
-            (
-              event,
-              d: Node & {
-                x?: number;
-                y?: number;
-                fx?: number | null;
-                fy?: number | null;
-              }
-            ) => {
-              if (!event.active) simulation.alphaTarget(0);
-              d.fx = null;
-              d.fy = null;
-              this.nodes.forEach((node) => {
-                if (node.id !== d.id) {
-                  this.nodeService.addLinkIfClose(d, node, 50);
-                }
-              });
-            }
-          )
+            });
+          })
       );
 
     const label = svg
@@ -211,79 +195,62 @@ export class GrafoComponent {
   }
 
   private showContextMenu(event: MouseEvent, node: Node): void {
-    const contextMenu = d3
-      .select(this.el.nativeElement)
-      .append('div')
-      .attr('class', 'context-menu')
-      .style('position', 'absolute')
-      .style('left', `${event.pageX}px`)
-      .style('top', `${event.pageY}px`)
-      .style('background', '#fff')
-      .style('border', '1px solid #ccc')
-      .style('padding', '10px')
-      .style('z-index', '1000');
-
-    contextMenu
-      .append('div')
-      .text('Eliminar nodo')
-      .on('click', () => {
-        this.removeNode(node);
-        contextMenu.remove();
-      });
-
-    d3.select('body').on('click.context-menu', () => {
-      contextMenu.remove();
-      d3.select('body').on('click.context-menu', null);
+    this.contextMenuContainer.clear();
+    const factory =
+      this.componentFactoryResolver.resolveComponentFactory(
+        ContextMenuComponent
+      );
+    const componentRef = this.contextMenuContainer.createComponent(factory);
+    componentRef.instance.node = node;
+    componentRef.instance.position = { x: event.pageX, y: event.pageY };
+    componentRef.instance.deleteNode.subscribe(() => {
+      this.removeNode(node);
+      this.contextMenuContainer.clear();
+    });
+    componentRef.instance.closeMenu.subscribe(() => {
+      this.contextMenuContainer.clear();
     });
   }
 
   private showEditLabelInput(event: MouseEvent, node: Node): void {
-    const container = d3
-      .select(this.el.nativeElement)
-      .append('div')
-      .style('position', 'absolute')
-      .style('left', `${event.pageX}px`)
-      .style('top', `${event.pageY}px`)
-      .style('z-index', '1000')
-      .style('background', '#fff')
-      .style('border', '1px solid #ccc')
-      .style('padding', '10px')
-      .style('border-radius', '4px');
-
-    container
-      .append('label')
-      .text('Edita el nodo')
-      .style('display', 'block')
-      .style('margin-bottom', '5px');
-
-    const input = container
-      .append('input')
-      .attr('type', 'text')
-      .attr('value', node.name)
-      .style('width', '200px')
-      .style('padding', '5px')
-      .style('margin-bottom', '5px')
-      .on('blur', () => {
-        this.updateNodeName(node, input.property('value'));
-        container.remove();
-      })
-      .on('keydown', (e) => {
-        if (e.key === 'Enter') {
-          this.updateNodeName(node, input.property('value'));
-          container.remove();
-        }
-      });
-
-    const inputNode = input.node();
-    if (inputNode) {
-      inputNode.focus();
-    }
+    this.editLabelContainer.clear();
+    const factory =
+      this.componentFactoryResolver.resolveComponentFactory(EditLabelComponent);
+    const componentRef = this.editLabelContainer.createComponent(factory);
+    componentRef.instance.node = node;
+    componentRef.instance.position = { x: event.pageX, y: event.pageY };
+    componentRef.instance.updateNodeDetails.subscribe(
+      ({ node, newName, newDescription }) => {
+        this.updateNodeDetails(node, newName, newDescription);
+        this.editLabelContainer.clear();
+      }
+    );
+    componentRef.instance.closeEdit.subscribe(() => {
+      this.editLabelContainer.clear();
+    });
   }
 
-  private updateNodeName(node: Node, newName: string): void {
+  private getNodePosition(node: Node): { x: number; y: number } {
+    const svgElement = this.el.nativeElement.querySelector('svg');
+    const point = svgElement.createSVGPoint();
+    point.x = node.x ?? 0;
+    point.y = node.y ?? 0;
+    const transformedPoint = point.matrixTransform(svgElement.getScreenCTM());
+    return { x: transformedPoint.x, y: transformedPoint.y };
+  }
+
+  private updateNodeDetails(
+    node: Node,
+    newName: string,
+    newDescription: string
+  ): void {
     const nodes = this.nodeService
       .getNodes()
-      .map((n) => (n.id === node.id ? { ...n, name: newName } : n));
+      .map((n) =>
+        n.id === node.id
+          ? { ...n, name: newName, description: newDescription }
+          : n
+      );
     this.nodeService.updateNodes(nodes);
     this.updateLinks();
     this.updateGraph();
