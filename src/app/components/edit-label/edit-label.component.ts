@@ -7,11 +7,14 @@ import {
   ElementRef,
   HostListener,
   NO_ERRORS_SCHEMA,
+  inject,
+  ChangeDetectorRef, // Importar ChangeDetectorRef
 } from '@angular/core';
 import { Node } from '../../models/grafo.models';
 import { FormsModule } from '@angular/forms';
 import { MarkdownModule } from 'ngx-markdown';
 import { CommonModule } from '@angular/common';
+import { NodesService } from '../../services/nodes/nodes.service';
 
 @Component({
   selector: 'app-edit-label',
@@ -30,16 +33,18 @@ export class EditLabelComponent implements AfterViewInit {
     newDescription: string;
   }>();
   @Output() closeEdit = new EventEmitter<void>();
+  nodeService = inject(NodesService);
 
   labelText: string = '';
   descriptionText: string = '';
   isExpanded: boolean = false;
   isDescriptionVisible: boolean = false;
+  id: string = '';
   private isDragging = false;
   private dragStartX = 0;
   private dragStartY = 0;
 
-  constructor(private el: ElementRef) {
+  constructor(private el: ElementRef, private cdr: ChangeDetectorRef) {
     console.log('EditLabelComponent constructor called');
   }
 
@@ -47,12 +52,14 @@ export class EditLabelComponent implements AfterViewInit {
     this.labelText = this.node.name;
     this.descriptionText = this.node.description || ''; // Asegurarse de cargar la descripción
     const inputElement = this.el.nativeElement.querySelector('input');
+    this.id = this.node.id;
     if (inputElement) {
       inputElement.focus();
     }
     this.el.nativeElement.style.position = 'absolute';
     this.el.nativeElement.style.left = `${this.position.x}px`;
     this.el.nativeElement.style.top = `${this.position.y}px`;
+    this.cdr.detectChanges(); // Detectar cambios manualmente
   }
 
   @HostListener('document:click', ['$event'])
@@ -82,14 +89,17 @@ export class EditLabelComponent implements AfterViewInit {
   }
 
   toggleDescriptionVisibility() {
-    console.log('toggleDescriptionVisibility called');
-    console.log('isDescriptionVisible before:', this.isDescriptionVisible);
     this.isDescriptionVisible = !this.isDescriptionVisible;
-    console.log('isDescriptionVisible after:', this.isDescriptionVisible);
+  }
+
+  deleteNode(id: string) {
+    this.nodeService.deleteNode(id);
+    this.closeEdit.emit(); // Cerrar el modal después de borrar el nodo
   }
 
   onDragStart(event: MouseEvent) {
-    if ((event.target as HTMLElement).tagName.toLowerCase() === 'textarea') {
+    const targetTag = (event.target as HTMLElement).tagName.toLowerCase();
+    if (targetTag === 'textarea' || targetTag === 'input') {
       return;
     }
     this.isDragging = true;

@@ -10,7 +10,6 @@ import {
 import { NodesService } from '../../services/nodes/nodes.service';
 import { Node } from '../../models/grafo.models';
 import * as d3 from 'd3';
-import { ContextMenuComponent } from '../context-menu/context-menu.component';
 import { EditLabelComponent } from '../edit-label/edit-label.component';
 
 @Component({
@@ -131,11 +130,7 @@ export class GrafoComponent {
       .append('circle')
       .attr('r', 10)
       .attr('fill', '#69b3a2')
-      .style('cursor', 'pointer') // Agregar estilo de cursor
-      .on('contextmenu', (event, d) => {
-        event.preventDefault();
-        this.showContextMenu(event, d);
-      })
+      .style('cursor', 'pointer')
       .on('dblclick', (event, d) => {
         console.log('Doble clic en nodo:', d); // Registro de depuración
         this.showEditLabelInput(event, d);
@@ -194,25 +189,8 @@ export class GrafoComponent {
     });
   }
 
-  private showContextMenu(event: MouseEvent, node: Node): void {
-    this.contextMenuContainer.clear();
-    const factory =
-      this.componentFactoryResolver.resolveComponentFactory(
-        ContextMenuComponent
-      );
-    const componentRef = this.contextMenuContainer.createComponent(factory);
-    componentRef.instance.node = node;
-    componentRef.instance.position = { x: event.pageX, y: event.pageY };
-    componentRef.instance.deleteNode.subscribe(() => {
-      this.removeNode(node);
-      this.contextMenuContainer.clear();
-    });
-    componentRef.instance.closeMenu.subscribe(() => {
-      this.contextMenuContainer.clear();
-    });
-  }
-
   private showEditLabelInput(event: MouseEvent, node: Node): void {
+    console.log('showEditLabelInput llamado con nodo:', node); // Registro de depuración
     this.editLabelContainer.clear();
     const factory =
       this.componentFactoryResolver.resolveComponentFactory(EditLabelComponent);
@@ -228,6 +206,10 @@ export class GrafoComponent {
     componentRef.instance.closeEdit.subscribe(() => {
       this.editLabelContainer.clear();
     });
+    console.log('Modal creado en posición:', {
+      x: event.pageX,
+      y: event.pageY,
+    }); // Añadir registro de depuración
   }
 
   private getNodePosition(node: Node): { x: number; y: number } {
