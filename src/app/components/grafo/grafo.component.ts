@@ -88,13 +88,13 @@ export class GrafoComponent {
         })
       )
       .append('g')
-      .node() as SVGGElement;
+      .node() as SVGElement;
 
     const svg = d3.select(svgElement);
 
     // Asegúrate de que svgElement sea un elemento SVG válido
-    if (!(svgElement instanceof SVGGElement)) {
-      throw new Error('svgElement is not an instance of SVGGElement');
+    if (!(svgElement instanceof SVGElement)) {
+      throw new Error('svgElement is not an instance of SVGElement');
     }
 
     const { width, height } = this.el.nativeElement.getBoundingClientRect();

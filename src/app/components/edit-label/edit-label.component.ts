@@ -59,6 +59,31 @@ export class EditLabelComponent implements AfterViewInit {
     this.el.nativeElement.style.position = 'absolute';
     this.el.nativeElement.style.left = `${this.position.x}px`;
     this.el.nativeElement.style.top = `${this.position.y}px`;
+    this.el.nativeElement.style.zIndex = '1000'; // Asegurar que el modal esté por encima del footer
+
+    // Ajustar la posición si el modal está fuera del viewport
+    const rect = this.el.nativeElement.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const margin = 10; // Margen de 10px
+
+    if (rect.right > viewportWidth - margin) {
+      this.el.nativeElement.style.left = `${
+        viewportWidth - rect.width - margin
+      }px`;
+    }
+    if (rect.bottom > viewportHeight - margin) {
+      this.el.nativeElement.style.top = `${
+        viewportHeight - rect.height - margin
+      }px`;
+    }
+    if (rect.left < margin) {
+      this.el.nativeElement.style.left = `${margin}px`;
+    }
+    if (rect.top < margin) {
+      this.el.nativeElement.style.top = `${margin}px`;
+    }
+
     this.cdr.detectChanges(); // Detectar cambios manualmente
   }
 
