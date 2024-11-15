@@ -1,27 +1,68 @@
-# GrafoAngular
+# 🚀 Angular Interactive Graph
+Una herramienta para crear, editar y visualizar grafos interactivos utilizando Angular y D3.js. Diseñada para representar relaciones entre datos de manera visual e intuitiva. Ideal para aprender sobre grafos o utilizarlos como una herramienta práctica en proyectos personales o profesionales.
+![2024-11-15-22-51-14](https://github.com/user-attachments/assets/7d295bef-8408-4c0f-846a-4069887c0d49)
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 17.3.7.
+## 🌟 Características
+Agregar nodos: Crea nuevos elementos en el grafo.
+Conectar nodos: Relaciona nodos entre sí manualmente.
+Editar nodos: Modifica el nombre o descripción de un nodo mediante un modal.
+Eliminar nodos o enlaces: Simplifica la gestión del grafo.
+Representación visual dinámica: Todo se actualiza en tiempo real.
 
-## Development server
+## 🎯 Objetivos del Proyecto
+Este proyecto surgió como un experimento para:
+Practicar Angular: Aprovechando sus capacidades reactivas con RxJS para manejar eventos complejos.
+Explorar D3.js: Adaptando su funcionalidad de visualización para permitir interacciones dinámicas.
+Inspirarse en herramientas como Obsidian: Crear una forma intuitiva de entender las conexiones entre datos.
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+## 🛠️ Tecnologías
+Angular: Framework principal para el desarrollo de la aplicación.
+D3.js: Para la representación visual y dinámica del grafo.
+RxJS: Manejo reactivo de eventos en tiempo real.
+TypeScript: Lenguaje principal para el desarrollo.
 
-## Code scaffolding
+## 📦 Instalación
+Sigue estos pasos para instalar y ejecutar el proyecto localmente:
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+1. Clona el repositorio
+bash
+Copiar código
+git clone https://github.com/tuusuario/angular-interactive-graph.git  
+cd angular-interactive-graph  
+2. Instala las dependencias
+Asegúrate de tener Node.js instalado. Luego ejecuta:
 
-## Build
+bash
+Copiar código
+npm install  
+3. Inicia la aplicación
+bash
+Copiar código
+ng serve  
+Accede a http://localhost:4200/ en tu navegador para ver la aplicación.
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+## 👨‍💻 Uso
+Crea nodos: Haz clic en el área del grafo para agregar un nodo nuevo.
+Conecta nodos: Arrastra un nodo hacia otro para crear una relación.
+Edita nodos: Haz doble clic en un nodo para abrir el modal y modificar sus propiedades.
+Elimina elementos: Selecciona un nodo o enlace y utiliza la opción de borrar.
 
-## Running unit tests
+## 🚧 Trabajo en progreso
+Este proyecto está en desarrollo. Algunas mejoras planeadas:
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+ Evitar el "salto al centro" del grafo tras crear o editar nodos.
+ Guardar y cargar grafos desde archivos JSON.
+ Mejoras en la interfaz de usuario.
 
-## Running end-to-end tests
+## 🤝 Contribuciones
+¡Las contribuciones son bienvenidas! Si tienes ideas o mejoras, no dudes en abrir un Issue o enviar un Pull Request.
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+## 📄 Licencia
+Este proyecto está bajo la licencia MIT.
 
-## Further help
+## 📧 Contacto
+Si tienes preguntas o sugerencias, puedes contactarme en:
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+LinkedIn: [Juan Pablo](https://www.linkedin.com/in/jromero-frontend-developer/)
+
+¡Gracias por visitar el proyecto! ✨
