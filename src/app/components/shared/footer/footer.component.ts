@@ -7,7 +7,7 @@ import { NodesService } from '../../../services/nodes/nodes.service';
   standalone: true,
   imports: [NodesFormComponent],
   templateUrl: './footer.component.html',
-  styleUrl: './footer.component.scss',
+  styleUrls: ['./footer.component.scss'],
 })
 export class FooterComponent {
   constructor(private nodeService: NodesService) {}
@@ -19,9 +19,7 @@ export class FooterComponent {
     const dataStr = JSON.stringify(data);
     const dataUri =
       'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
-
     const exportFileDefaultName = 'data.json';
-
     const linkElement = document.createElement('a');
     linkElement.setAttribute('href', dataUri);
     linkElement.setAttribute('download', exportFileDefaultName);
@@ -34,7 +32,6 @@ export class FooterComponent {
     reader.onload = (e) => {
       const content = e.target?.result as string;
       const data = JSON.parse(content);
-      console.log(data);
       if (data.nodes) {
         localStorage.setItem('nodes', data.nodes);
         this.nodeService.updateNodes(JSON.parse(data.nodes));
@@ -58,15 +55,12 @@ export class FooterComponent {
     event.preventDefault();
     const nodes = JSON.parse(localStorage.getItem('nodes') || '[]');
     const links = JSON.parse(localStorage.getItem('links') || '[]');
-
     const updatedNodes = nodes.filter((node: any) => node.id !== nodeId);
     const updatedLinks = links.filter(
       (link: any) => link.source !== nodeId && link.target !== nodeId
     );
-
     localStorage.setItem('nodes', JSON.stringify(updatedNodes));
     localStorage.setItem('links', JSON.stringify(updatedLinks));
-
     this.nodeService.updateNodes(updatedNodes);
     this.nodeService.updateLinks(updatedLinks);
   }

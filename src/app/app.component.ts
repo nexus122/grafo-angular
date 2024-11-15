@@ -7,7 +7,7 @@ import { FooterComponent } from './components/shared/footer/footer.component';
   standalone: true,
   imports: [RouterOutlet, GrafoComponent, FooterComponent],
   templateUrl: './app.component.html',
-  styleUrl: './app.component.scss',
+  styleUrls: ['./app.component.scss'],
 })
 export class AppComponent {
   title = 'grafo-angular';

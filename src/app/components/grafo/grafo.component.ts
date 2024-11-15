@@ -3,7 +3,6 @@ import {
   ElementRef,
   inject,
   ViewChild,
-  ComponentFactoryResolver,
   ViewContainerRef,
   HostListener,
 } from '@angular/core';
@@ -17,7 +16,7 @@ import { EditLabelComponent } from '../edit-label/edit-label.component';
   standalone: true,
   imports: [],
   templateUrl: './grafo.component.html',
-  styleUrl: './grafo.component.scss',
+  styleUrls: ['./grafo.component.scss'],
 })
 export class GrafoComponent {
   nodeService = inject(NodesService);
@@ -34,17 +33,14 @@ export class GrafoComponent {
   })[] = [];
   private links: { source: Node; target: Node }[] = [];
 
-  constructor(
-    private el: ElementRef,
-    private componentFactoryResolver: ComponentFactoryResolver
-  ) {}
+  constructor(private el: ElementRef) {}
 
   ngOnInit(): void {
     this.nodeService.nodesChanged$.subscribe((nodes) => {
       this.nodes = nodes.map((node) => ({
         id: node.id,
         name: node.name,
-        description: node.description, // Asegurarse de incluir la descripción
+        description: node.description,
       }));
       this.updateLinks();
       this.updateGraph();
@@ -92,7 +88,6 @@ export class GrafoComponent {
 
     const svg = d3.select(svgElement);
 
-    // Asegúrate de que svgElement sea un elemento SVG válido
     if (!(svgElement instanceof SVGElement)) {
       throw new Error('svgElement is not an instance of SVGElement');
     }
@@ -104,8 +99,8 @@ export class GrafoComponent {
       .force(
         'link',
         d3
-          .forceLink(this.links)
-          .id((d: any) => d.id)
+          .forceLink<Node, { source: Node; target: Node }>(this.links)
+          .id((d: Node) => d.id)
           .distance(100)
       )
       .force('charge', d3.forceManyBody().strength(-300))
@@ -132,7 +127,6 @@ export class GrafoComponent {
       .attr('fill', '#69b3a2')
       .style('cursor', 'pointer')
       .on('dblclick', (event, d) => {
-        console.log('Doble clic en nodo:', d); // Registro de depuración
         this.showEditLabelInput(event, d);
       })
       .call(
@@ -190,35 +184,29 @@ export class GrafoComponent {
   }
 
   private showEditLabelInput(event: MouseEvent, node: Node): void {
-    console.log('showEditLabelInput llamado con nodo:', node); // Registro de depuración
     this.editLabelContainer.clear();
-    const factory =
-      this.componentFactoryResolver.resolveComponentFactory(EditLabelComponent);
-    const componentRef = this.editLabelContainer.createComponent(factory);
-    componentRef.instance.node = node;
-    componentRef.instance.position = { x: event.pageX, y: event.pageY };
-    componentRef.instance.updateNodeDetails.subscribe(
-      ({ node, newName, newDescription }) => {
+    const componentRef =
+      this.editLabelContainer.createComponent(EditLabelComponent);
+    const instance = componentRef.instance as EditLabelComponent;
+    instance.node = node;
+    instance.position = { x: event.pageX, y: event.pageY };
+    instance.updateNodeDetails.subscribe(
+      ({
+        node,
+        newName,
+        newDescription,
+      }: {
+        node: Node;
+        newName: string;
+        newDescription: string;
+      }) => {
         this.updateNodeDetails(node, newName, newDescription);
         this.editLabelContainer.clear();
       }
     );
-    componentRef.instance.closeEdit.subscribe(() => {
+    instance.closeEdit.subscribe(() => {
       this.editLabelContainer.clear();
     });
-    console.log('Modal creado en posición:', {
-      x: event.pageX,
-      y: event.pageY,
-    }); // Añadir registro de depuración
-  }
-
-  private getNodePosition(node: Node): { x: number; y: number } {
-    const svgElement = this.el.nativeElement.querySelector('svg');
-    const point = svgElement.createSVGPoint();
-    point.x = node.x ?? 0;
-    point.y = node.y ?? 0;
-    const transformedPoint = point.matrixTransform(svgElement.getScreenCTM());
-    return { x: transformedPoint.x, y: transformedPoint.y };
   }
 
   private updateNodeDetails(
@@ -234,17 +222,6 @@ export class GrafoComponent {
           : n
       );
     this.nodeService.updateNodes(nodes);
-    this.updateLinks();
-    this.updateGraph();
-  }
-
-  private removeNode(node: Node): void {
-    const nodes = this.nodeService.getNodes().filter((n) => n.id !== node.id);
-    const links = this.nodeService
-      .getLinks()
-      .filter((link) => link.source !== node.id && link.target !== node.id);
-    this.nodeService.updateNodes(nodes);
-    this.nodeService.updateLinks(links);
     this.updateLinks();
     this.updateGraph();
   }

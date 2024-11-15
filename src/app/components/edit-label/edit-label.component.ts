@@ -8,7 +8,7 @@ import {
   HostListener,
   NO_ERRORS_SCHEMA,
   inject,
-  ChangeDetectorRef, // Importar ChangeDetectorRef
+  ChangeDetectorRef,
 } from '@angular/core';
 import { Node } from '../../models/grafo.models';
 import { FormsModule } from '@angular/forms';
@@ -44,13 +44,11 @@ export class EditLabelComponent implements AfterViewInit {
   private dragStartX = 0;
   private dragStartY = 0;
 
-  constructor(private el: ElementRef, private cdr: ChangeDetectorRef) {
-    console.log('EditLabelComponent constructor called');
-  }
+  constructor(private el: ElementRef, private cdr: ChangeDetectorRef) {}
 
   ngAfterViewInit() {
     this.labelText = this.node.name;
-    this.descriptionText = this.node.description || ''; // Asegurarse de cargar la descripción
+    this.descriptionText = this.node.description || '';
     const inputElement = this.el.nativeElement.querySelector('input');
     this.id = this.node.id;
     if (inputElement) {
@@ -58,11 +56,9 @@ export class EditLabelComponent implements AfterViewInit {
     }
     this.el.nativeElement.style.position = 'absolute';
 
-    // Verificar si es un dispositivo móvil
     const isMobile = window.innerWidth <= 768;
 
     if (isMobile) {
-      // Centrar el modal en la pantalla
       const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight;
       const modalWidth = this.el.nativeElement.offsetWidth;
@@ -75,18 +71,16 @@ export class EditLabelComponent implements AfterViewInit {
         (viewportHeight - modalHeight) / 2
       }px`;
     } else {
-      // Posicionar el modal en la posición del nodo
       this.el.nativeElement.style.left = `${this.position.x}px`;
       this.el.nativeElement.style.top = `${this.position.y}px`;
     }
 
-    this.el.nativeElement.style.zIndex = '1000'; // Asegurar que el modal esté por encima del footer
+    this.el.nativeElement.style.zIndex = '1000';
 
-    // Ajustar la posición si el modal está fuera del viewport
     const rect = this.el.nativeElement.getBoundingClientRect();
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-    const margin = 10; // Margen de 10px
+    const margin = 10;
 
     if (rect.right > viewportWidth - margin) {
       this.el.nativeElement.style.left = `${
@@ -105,7 +99,7 @@ export class EditLabelComponent implements AfterViewInit {
       this.el.nativeElement.style.top = `${margin}px`;
     }
 
-    this.cdr.detectChanges(); // Detectar cambios manualmente
+    this.cdr.detectChanges();
   }
 
   @HostListener('document:click', ['$event'])
@@ -140,7 +134,7 @@ export class EditLabelComponent implements AfterViewInit {
 
   deleteNode(id: string) {
     this.nodeService.deleteNode(id);
-    this.closeEdit.emit(); // Cerrar el modal después de borrar el nodo
+    this.closeEdit.emit();
   }
 
   onDragStart(event: MouseEvent) {
