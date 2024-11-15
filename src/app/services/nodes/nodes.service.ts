@@ -35,6 +35,20 @@ export class NodesService {
     this.localStorageService.addData('nodes', nodes);
   }
 
+  deleteNode(nodeId: string) {
+    const nodes = this.nodesSubject
+      .getValue()
+      .filter((node) => node.id !== nodeId);
+    this.nodesSubject.next(nodes);
+    this.localStorageService.addData('nodes', nodes);
+
+    const links = this.linksSubject
+      .getValue()
+      .filter((link) => link.source !== nodeId && link.target !== nodeId);
+    this.linksSubject.next(links);
+    this.localStorageService.addData('links', links);
+  }
+
   // Links
   addLink(link: Link) {
     const links = [...this.linksSubject.getValue(), link];

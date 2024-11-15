@@ -28,5 +28,12 @@
   <markdown *ngIf="!isDescriptionVisible" [data]="descriptionText"></markdown>
 
   <div class="flex-grow"></div>
-  <button class="btn btn-block self-end" (click)="saveLabel()">Save</button>
+  <div class="flex flex-col justify-between">
+    <button class="btn btn-success btn-block" (click)="saveLabel()">
+      Save
+    </button>
+    <button class="error btn-error" (click)="deleteNode(id)">
+      Delete Node
+    </button>
+  </div>
 </div>
