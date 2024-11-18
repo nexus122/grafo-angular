@@ -78,6 +78,7 @@ export class GrafoComponent {
       .append('svg')
       .attr('width', '100%')
       .attr('height', '100%')
+      .attr('style', 'position: absolute; top: 0;')
       .call(
         d3.zoom<SVGSVGElement, unknown>().on('zoom', (event) => {
           svg.attr('transform', event.transform);
