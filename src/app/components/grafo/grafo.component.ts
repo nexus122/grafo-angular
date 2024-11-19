@@ -1,15 +1,9 @@
-import {
-  Component,
-  ElementRef,
-  inject,
-  ViewChild,
-  ViewContainerRef,
-  HostListener,
-} from '@angular/core';
+import { Component, ElementRef, inject, OnInit } from '@angular/core';
 import { NodesService } from '../../services/nodes/nodes.service';
 import { Node } from '../../models/grafo.models';
 import * as d3 from 'd3';
-import { EditLabelComponent } from '../edit-label/edit-label.component';
+import { Router } from '@angular/router';
+import { combineLatest } from 'rxjs';
 
 @Component({
   selector: 'app-grafo',
@@ -18,123 +12,140 @@ import { EditLabelComponent } from '../edit-label/edit-label.component';
   templateUrl: './grafo.component.html',
   styleUrls: ['./grafo.component.scss'],
 })
-export class GrafoComponent {
+export class GrafoComponent implements OnInit {
   nodeService = inject(NodesService);
-  @ViewChild('contextMenuContainer', { read: ViewContainerRef })
-  contextMenuContainer!: ViewContainerRef;
-  @ViewChild('editLabelContainer', { read: ViewContainerRef })
-  editLabelContainer!: ViewContainerRef;
 
+  // Usar Map para búsquedas rápidas de nodos por ID
   private nodes: (Node & {
     x?: number;
     y?: number;
     fx?: number | null;
     fy?: number | null;
   })[] = [];
+  private nodesMap = new Map<string, Node>(); // Mapa de nodos para accesos eficientes
   private links: { source: Node; target: Node }[] = [];
+  private simulation: d3.Simulation<Node, undefined> | undefined;
 
-  constructor(private el: ElementRef) {}
+  constructor(private el: ElementRef, private router: Router) {}
 
   ngOnInit(): void {
-    this.nodeService.nodesChanged$.subscribe((nodes) => {
-      this.nodes = nodes.map((node) => ({
-        id: node.id,
-        name: node.name,
-        description: node.description,
-      }));
-      this.updateLinks();
-      this.updateGraph();
-    });
-    this.nodeService.linksChanged$.subscribe((links) => {
-      this.links = links.map((link) => ({
-        source: this.nodes.find((node) => node.id === link.source)!,
-        target: this.nodes.find((node) => node.id === link.target)!,
-      }));
-      this.updateGraph();
-    });
-  }
+    // Asegurarse de que el contenedor tenga un tamaño definido
+    setTimeout(() => {
+      const container = this.el.nativeElement.querySelector('.grafo-container');
+      const width = container.clientWidth;
+      const height = container.clientHeight;
 
-  @HostListener('window:scroll', ['$event'])
-  onScroll() {
-    this.contextMenuContainer.clear();
-    this.editLabelContainer.clear();
-  }
+      // Combinar streams de nodos y enlaces para evitar actualizaciones múltiples
+      combineLatest([
+        this.nodeService.nodesChanged$,
+        this.nodeService.linksChanged$,
+      ]).subscribe(([nodes, links]) => {
+        this.nodes = nodes.map((node) => ({
+          id: node.id,
+          name: node.name,
+          description: node.description,
+          x: node.x ?? Math.random() * 1000, // Inicializar coordenadas x
+          y: node.y ?? Math.random() * 1000, // Inicializar coordenadas y
+        }));
 
-  private updateLinks(): void {
-    this.links = this.nodeService.getLinks().map((link) => ({
-      source: this.nodes.find((node) => node.id === link.source)!,
-      target: this.nodes.find((node) => node.id === link.target)!,
-    }));
+        // Centrar nodos en la pantalla
+        this.nodes.forEach((node) => {
+          node.x = node.x ?? width / 2;
+          node.y = node.y ?? height / 2;
+        });
+
+        // Actualizar el mapa de nodos para búsquedas rápidas
+        this.nodesMap.clear();
+        this.nodes.forEach((node) => this.nodesMap.set(node.id, node));
+
+        // Actualizar enlaces con el nuevo mapa
+        this.links = links.map((link) => ({
+          source: this.nodesMap.get(link.source)!,
+          target: this.nodesMap.get(link.target)!,
+        }));
+
+        this.updateGraph();
+      });
+    }, 0);
   }
 
   private updateGraph(): void {
-    d3.select(this.el.nativeElement).select('svg').remove();
-    this.createGraph();
+    const svg = d3
+      .select<SVGSVGElement, unknown>(this.el.nativeElement)
+      .select<SVGSVGElement>('svg');
+
+    if (svg.empty()) {
+      // Si el SVG no existe, crear uno nuevo
+      this.createGraph();
+    } else {
+      // Si el SVG ya existe, solo actualizar elementos
+      this.updateGraphElements(svg);
+    }
   }
 
   private createGraph(): void {
+    const container = this.el.nativeElement.querySelector('.grafo-container');
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+
     const svgElement = d3
       .select(this.el.nativeElement)
       .append('svg')
       .attr('width', '100%')
-      .attr('height', '100%')
-      .attr('style', 'position: absolute; top: 0;')
+      .attr('height', '86vh')
+      .attr('class', 'svg-container')
       .call(
         d3.zoom<SVGSVGElement, unknown>().on('zoom', (event) => {
-          svg.attr('transform', event.transform);
+          d3.select(svgElement).attr('transform', event.transform);
         })
       )
       .append('g')
-      .node() as SVGElement;
+      .node() as SVGSVGElement;
 
-    const svg = d3.select(svgElement);
+    const svg = d3.select<any, any>(svgElement);
 
-    if (!(svgElement instanceof SVGElement)) {
-      throw new Error('svgElement is not an instance of SVGElement');
-    }
+    svg.append('g').attr('class', 'links');
+    svg.append('g').attr('class', 'nodes');
+    svg.append('g').attr('class', 'labels');
 
-    const { width, height } = this.el.nativeElement.getBoundingClientRect();
+    this.updateGraphElements(svg as any);
+  }
 
-    const simulation = d3
-      .forceSimulation(this.nodes)
-      .force(
-        'link',
-        d3
-          .forceLink<Node, { source: Node; target: Node }>(this.links)
-          .id((d: Node) => d.id)
-          .distance(100)
-      )
-      .force('charge', d3.forceManyBody().strength(-300))
-      .force('center', d3.forceCenter(width / 2, height / 2));
+  private updateGraphElements(
+    svg: d3.Selection<SVGSVGElement, unknown, HTMLElement, any>
+  ): void {
+    // Asegurarse de que las coordenadas se inicialicen correctamente
+    this.nodes.forEach((node) => {
+      if (node.x === undefined || node.y === undefined) {
+        node.x = Math.random() * 1000;
+        node.y = Math.random() * 1000;
+      }
+    });
 
-    const link = svg
-      .append('g')
-      .attr('class', 'links')
-      .selectAll('line')
+    // Actualizar enlaces
+    svg
+      .select('.links')
+      .selectAll<SVGLineElement, { source: Node; target: Node }>('line')
       .data(this.links)
-      .enter()
-      .append('line')
+      .join('line') // Reutilizar elementos existentes o crearlos
       .attr('stroke-width', 2)
       .attr('stroke', '#999');
 
-    const node = svg
-      .append('g')
-      .attr('class', 'nodes')
-      .selectAll('circle')
+    // Actualizar nodos
+    svg
+      .select('.nodes')
+      .selectAll<SVGCircleElement, Node>('circle')
       .data(this.nodes)
-      .enter()
-      .append('circle')
+      .join('circle') // Reutilizar elementos existentes o crearlos
       .attr('r', 10)
       .attr('fill', '#69b3a2')
       .style('cursor', 'pointer')
-      .on('dblclick', (event, d) => {
-        this.showEditLabelInput(event, d);
-      })
+      .on('click', (event, d) => this.goToNodeDetails(d.id))
       .call(
         d3
           .drag<SVGCircleElement, Node>()
           .on('start', (event, d) => {
-            if (!event.active) simulation.alphaTarget(0.3).restart();
+            if (!event.active) this.simulation?.alphaTarget(0.3).restart();
             d.fx = d.x;
             d.fy = d.y;
           })
@@ -143,24 +154,19 @@ export class GrafoComponent {
             d.fy = event.y;
           })
           .on('end', (event, d) => {
-            if (!event.active) simulation.alphaTarget(0);
+            if (!event.active) this.simulation?.alphaTarget(0);
+            this.checkForNewLink(d);
             d.fx = null;
             d.fy = null;
-            this.nodes.forEach((node) => {
-              if (node.id !== d.id) {
-                this.nodeService.addLinkIfClose(d, node, 50);
-              }
-            });
           })
       );
 
-    const label = svg
-      .append('g')
-      .attr('class', 'labels')
-      .selectAll('text')
+    // Actualizar etiquetas
+    svg
+      .select('.labels')
+      .selectAll<SVGTextElement, Node>('text')
       .data(this.nodes)
-      .enter()
-      .append('text')
+      .join('text') // Reutilizar elementos existentes o crearlos
       .attr('dy', -3)
       .attr('dx', 12)
       .text((d) => d.name)
@@ -171,59 +177,78 @@ export class GrafoComponent {
         return isDarkTheme ? '#ffffff' : '#000000';
       });
 
-    simulation.on('tick', () => {
-      link
+    // Actualizar simulación
+    this.updateSimulation(svg as any);
+  }
+
+  private updateSimulation(
+    svg: d3.Selection<SVGSVGElement, unknown, null, undefined>
+  ): void {
+    const container = this.el.nativeElement.querySelector('svg');
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+
+    console.log('width', width);
+    console.log('height', height);
+
+    this.simulation = d3
+      .forceSimulation(this.nodes)
+      .force(
+        'link',
+        d3
+          .forceLink<Node, { source: Node; target: Node }>(this.links)
+          .id((d: Node) => d.id)
+          .distance(100)
+      )
+      .force('charge', d3.forceManyBody().strength(-150)) // Reducir la carga para mejorar rendimiento
+      .force('center', d3.forceCenter(width / 2, height / 2)) // Centrar nodos en la pantalla
+      .force('attract', d3.forceManyBody().strength(50)) // Agregar fuerza de atracción entre nodos
+      .alphaDecay(0.03); // Enfriamiento más lento para estabilidad
+
+    this.simulation.on('tick', () => {
+      svg
+        .select('.links')
+        .selectAll<SVGLineElement, { source: Node; target: Node }>('line')
         .attr('x1', (d) => d.source.x ?? 0)
         .attr('y1', (d) => d.source.y ?? 0)
         .attr('x2', (d) => d.target.x ?? 0)
         .attr('y2', (d) => d.target.y ?? 0);
 
-      node.attr('cx', (d) => d.x ?? 0).attr('cy', (d) => d.y ?? 0);
+      svg
+        .select('.nodes')
+        .selectAll<SVGCircleElement, Node>('circle')
+        .attr('cx', (d) => d.x ?? 0)
+        .attr('cy', (d) => d.y ?? 0);
 
-      label.attr('x', (d) => d.x ?? 0).attr('y', (d) => d.y ?? 0);
+      svg
+        .select('.labels')
+        .selectAll<SVGTextElement, Node>('text')
+        .attr('x', (d) => d.x ?? 0)
+        .attr('y', (d) => d.y ?? 0);
     });
   }
 
-  private showEditLabelInput(event: MouseEvent, node: Node): void {
-    this.editLabelContainer.clear();
-    const componentRef =
-      this.editLabelContainer.createComponent(EditLabelComponent);
-    const instance = componentRef.instance as EditLabelComponent;
-    instance.node = node;
-    instance.position = { x: event.pageX, y: event.pageY };
-    instance.updateNodeDetails.subscribe(
-      ({
-        node,
-        newName,
-        newDescription,
-      }: {
-        node: Node;
-        newName: string;
-        newDescription: string;
-      }) => {
-        this.updateNodeDetails(node, newName, newDescription);
-        this.editLabelContainer.clear();
+  private goToNodeDetails(nodeId: string): void {
+    this.router.navigate(['/node', nodeId]);
+  }
+
+  private checkForNewLink(draggedNode: Node): void {
+    const detectionRadius = 50; // Aumentar la distancia de detección
+    this.nodes.forEach((node) => {
+      if (node === draggedNode) return; // No crear enlaces con uno mismo
+      const dx = (node.x ?? 0) - (draggedNode.x ?? 0);
+      const dy = (node.y ?? 0) - (draggedNode.y ?? 0);
+      if (Math.sqrt(dx * dx + dy * dy) < detectionRadius) {
+        // Verificar si el enlace ya existe
+        const linkExists = this.links.some(
+          (link) =>
+            (link.source.id === draggedNode.id && link.target.id === node.id) ||
+            (link.source.id === node.id && link.target.id === draggedNode.id)
+        );
+        if (!linkExists) {
+          this.nodeService.addLink({ source: draggedNode.id, target: node.id });
+        }
       }
-    );
-    instance.closeEdit.subscribe(() => {
-      this.editLabelContainer.clear();
     });
-  }
-
-  private updateNodeDetails(
-    node: Node,
-    newName: string,
-    newDescription: string
-  ): void {
-    const nodes = this.nodeService
-      .getNodes()
-      .map((n) =>
-        n.id === node.id
-          ? { ...n, name: newName, description: newDescription }
-          : n
-      );
-    this.nodeService.updateNodes(nodes);
-    this.updateLinks();
-    this.updateGraph();
   }
 }
