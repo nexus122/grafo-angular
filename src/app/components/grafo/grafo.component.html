@@ -1,3 +1,7 @@
-<div>
-  <div class="grafo-container h-full"></div>
+<div class="grafo-container w-full h-[86vh]">
+  <app-node-details
+    class="w-full shadow-xl p-2"
+    *ngIf="this.nodeService.selectedNode"
+    [node]="this.nodeService.selectedNode"
+  ></app-node-details>
 </div>
