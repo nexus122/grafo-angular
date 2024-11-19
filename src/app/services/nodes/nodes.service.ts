@@ -30,12 +30,31 @@ export class NodesService {
     return this.nodesSubject.getValue();
   }
 
+  getLastNode(): number {
+    return this.nodesSubject.getValue().length;
+  }
+
+  getNodeById(nodeId: string): any {
+    return this.nodesSubject.getValue().find((node) => node.id === nodeId);
+  }
+
   updateNodes(nodes: Node[]) {
+    if (!nodes) return;
+    this.nodesSubject.next(nodes);
+    this.localStorageService.addData('nodes', nodes);
+  }
+
+  updateNode(updatedNode: Node) {
+    if (!updatedNode) return;
+    const nodes = this.nodesSubject
+      .getValue()
+      .map((node) => (node.id === updatedNode.id ? updatedNode : node));
     this.nodesSubject.next(nodes);
     this.localStorageService.addData('nodes', nodes);
   }
 
   deleteNode(nodeId: string) {
+    if (!nodeId) return;
     const nodes = this.nodesSubject
       .getValue()
       .filter((node) => node.id !== nodeId);
@@ -51,6 +70,7 @@ export class NodesService {
 
   // Links
   addLink(link: Link) {
+    if (!link) return;
     const links = [...this.linksSubject.getValue(), link];
     this.linksSubject.next(links);
     this.localStorageService.addData('links', links);
@@ -61,6 +81,7 @@ export class NodesService {
   }
 
   updateLinks(links: Link[]): void {
+    if (!links) return;
     this.linksSubject.next(links);
     this.localStorageService.addData('links', links);
   }

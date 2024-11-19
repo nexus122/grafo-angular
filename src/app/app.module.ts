@@ -1,18 +1,21 @@
-import { NgModule, NO_ERRORS_SCHEMA } from '@angular/core';
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { FormsModule } from '@angular/forms';
+import { AppRoutingModule } from './app-routing.module';
+import { RouterModule } from '@angular/router';
 import { MarkdownModule } from 'ngx-markdown';
-import { AppComponent } from './app.component';
-import { InstructionsComponent } from './components/instructions/instructions.component';
 
 @NgModule({
-  declarations: [
-    // ...existing code...
-    InstructionsComponent,
-  ],
+  declarations: [],
   imports: [
-    // ...existing code...
+    BrowserModule,
+    AppRoutingModule,
+    FormsModule,
+    RouterModule,
     MarkdownModule.forRoot(),
   ],
   providers: [],
-  schemas: [NO_ERRORS_SCHEMA],
+  schemas: [],
+  bootstrap: [],
 })
 export class AppModule {}
