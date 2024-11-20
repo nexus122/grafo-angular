@@ -4,11 +4,13 @@ import { Node } from '../../models/grafo.models';
 import * as d3 from 'd3';
 import { Router } from '@angular/router';
 import { combineLatest } from 'rxjs';
+import { CommonModule } from '@angular/common';
+import { NodeDetailsComponent } from '../node-details/node-details.component';
 
 @Component({
   selector: 'app-grafo',
   standalone: true,
-  imports: [],
+  imports: [CommonModule, NodeDetailsComponent], // Importar CommonModule y NodeDetailsComponent
   templateUrl: './grafo.component.html',
   styleUrls: ['./grafo.component.scss'],
 })
@@ -44,15 +46,9 @@ export class GrafoComponent implements OnInit {
           id: node.id,
           name: node.name,
           description: node.description,
-          x: node.x ?? Math.random() * 1000, // Inicializar coordenadas x
-          y: node.y ?? Math.random() * 1000, // Inicializar coordenadas y
+          x: node.x ?? width / 2, // Inicializar coordenadas x centradas
+          y: node.y ?? height / 2, // Inicializar coordenadas y centradas
         }));
-
-        // Centrar nodos en la pantalla
-        this.nodes.forEach((node) => {
-          node.x = node.x ?? width / 2;
-          node.y = node.y ?? height / 2;
-        });
 
         // Actualizar el mapa de nodos para búsquedas rápidas
         this.nodesMap.clear();
@@ -90,9 +86,10 @@ export class GrafoComponent implements OnInit {
 
     const svgElement = d3
       .select(this.el.nativeElement)
+      .select('.grafo-container')
       .append('svg')
       .attr('width', '100%')
-      .attr('height', '86vh')
+      .attr('height', '100%') // Asegurarse de que el SVG ocupe todo el contenedor
       .attr('class', 'svg-container')
       .call(
         d3.zoom<SVGSVGElement, unknown>().on('zoom', (event) => {
@@ -184,7 +181,7 @@ export class GrafoComponent implements OnInit {
   private updateSimulation(
     svg: d3.Selection<SVGSVGElement, unknown, null, undefined>
   ): void {
-    const container = this.el.nativeElement.querySelector('svg');
+    const container = this.el.nativeElement.querySelector('.grafo-container');
     const width = container.clientWidth;
     const height = container.clientHeight;
 
@@ -202,7 +199,6 @@ export class GrafoComponent implements OnInit {
       )
       .force('charge', d3.forceManyBody().strength(-150)) // Reducir la carga para mejorar rendimiento
       .force('center', d3.forceCenter(width / 2, height / 2)) // Centrar nodos en la pantalla
-      .force('attract', d3.forceManyBody().strength(50)) // Agregar fuerza de atracción entre nodos
       .alphaDecay(0.03); // Enfriamiento más lento para estabilidad
 
     this.simulation.on('tick', () => {
@@ -229,7 +225,7 @@ export class GrafoComponent implements OnInit {
   }
 
   private goToNodeDetails(nodeId: string): void {
-    this.router.navigate(['/node', nodeId]);
+    this.nodeService.selectedNode = this.nodesMap.get(nodeId) || null;
   }
 
   private checkForNewLink(draggedNode: Node): void {

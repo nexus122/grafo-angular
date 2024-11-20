@@ -16,6 +16,7 @@ export class NodesService {
 
   nodesChanged$ = this.nodesSubject.asObservable();
   linksChanged$ = this.linksSubject.asObservable();
+  selectedNode: Node | null = null;
 
   constructor(private localStorageService: LocalStorageService) {}
 
