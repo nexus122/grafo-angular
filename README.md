@@ -1,6 +1,7 @@
 # 🚀 Angular Interactive Graph
 Una herramienta para crear, editar y visualizar grafos interactivos utilizando Angular y D3.js. Diseñada para representar relaciones entre datos de manera visual e intuitiva. Ideal para aprender sobre grafos o utilizarlos como una herramienta práctica en proyectos personales o profesionales.
-![2024-11-15-22-51-14](https://github.com/user-attachments/assets/7d295bef-8408-4c0f-846a-4069887c0d49)
+![screenshot-rocks](https://github.com/user-attachments/assets/e4a4451c-4a71-4a7c-9abf-7dd2e215acde)
+
 
 ## 🌟 Características
 Agregar nodos: Crea nuevos elementos en el grafo.
